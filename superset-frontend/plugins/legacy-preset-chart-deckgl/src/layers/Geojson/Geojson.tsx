@@ -17,7 +17,7 @@
  * under the License.
  */
 import { memo, useCallback, useMemo, useRef } from 'react';
-import { GeoJsonLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, GeoJsonLayerProps } from '@deck.gl/layers';
 // ignoring the eslint error below since typescript prefers 'geojson' to '@types/geojson'
 // eslint-disable-next-line import/no-unresolved
 import { Feature, Geometry, GeoJsonProperties } from 'geojson';
@@ -44,6 +44,7 @@ import { TooltipProps } from '../../components/Tooltip';
 import { Point } from '../../types';
 import { GetLayerType } from '../../factory';
 import { HIGHLIGHT_COLOR_ARRAY } from '../../utils';
+import { PRIMARY_COLOR, BLACK_COLOR } from '../../utilities/controls';
 
 type ProcessedFeature = Feature<Geometry, GeoJsonProperties> & {
   properties: JsonObject;
@@ -137,6 +138,38 @@ const getFillColor = (feature: JsonObject, filterStateValue: unknown[]) => {
 };
 const getLineColor = (feature: JsonObject) => feature?.properties?.strokeColor;
 
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const deckglTextOptions: (keyof GeoJsonLayerProps)[] = [
+  'getText',
+  'getTextColor',
+  'getTextAngle',
+  'getTextSize',
+  'getTextAnchor',
+  'getTextAlignmentBaseline',
+  'getTextPixelOffset',
+  'getTextBackgroundColor',
+  'getTextBorderColor',
+  'getTextBorderWidth',
+  'textSizeUnits',
+  'textSizeScale',
+  'textSizeMinPixels',
+  'textSizeMaxPixels',
+  'textCharacterSet',
+  'textFontFamily',
+  'textFontWeight',
+  'textLineHeight',
+  'textMaxWidth',
+  'textWordBreak',
+  'textBackground',
+  'textBackgroundPadding',
+  'textOutlineColor',
+  'textOutlineWidth',
+  'textBillboard',
+  'textFontSettings',
+];
+
 export const getLayer: GetLayerType<GeoJsonLayer> = function ({
   formData,
   onContextMenu,
@@ -147,8 +180,8 @@ export const getLayer: GetLayerType<GeoJsonLayer> = function ({
   emitCrossFilters,
 }) {
   const fd = formData;
-  const fc = fd.fill_color_picker;
-  const sc = fd.stroke_color_picker;
+  const fc = fd.fill_color_picker ?? PRIMARY_COLOR;
+  const sc = fd.stroke_color_picker ?? PRIMARY_COLOR;
   const fillColor = [fc.r, fc.g, fc.b, 255 * fc.a];
   const strokeColor = [sc.r, sc.g, sc.b, 255 * sc.a];
   const propOverrides: JsonObject = {};
@@ -169,7 +202,35 @@ export const getLayer: GetLayerType<GeoJsonLayer> = function ({
     processedFeatures = jsFnMutator(features) as ProcessedFeature[];
   }
 
+  let pointType = 'circle';
+  if (fd.enable_labels) {
+    pointType = `${pointType}+text`;
+  }
+
+  let labelOpts: Partial<GeoJsonLayerProps> = {};
+  if (fd.enable_labels) {
+    if (fd.enable_label_javascript_mode) {
+      const generator = sandboxedEval(fd.label_javascript_config_generator);
+      const output: unknown = generator();
+      if (isObject(output)) {
+        labelOpts = Object.keys(output)
+          .filter((k): k is keyof GeoJsonLayerProps => deckglTextOptions.includes(k as keyof GeoJsonLayerProps))
+          .reduce((obj, key) => ({ ...obj, [key]: output[key as keyof typeof output] }), {});
+      }
+    } else {
+      const labelColor = fd.label_color ?? BLACK_COLOR;
+      labelOpts = {
+        getText: (f: JsonObject) => f?.properties?.[fd.label_property_name] ?? '',
+        getTextColor: [labelColor.r, labelColor.g, labelColor.b, 255 * labelColor.a],
+        getTextSize: fd.label_size ?? 24,
+        textSizeUnits: fd.label_size_unit ?? 'pixels',
+      };
+    }
+  }
+
   return new GeoJsonLayer({
+    pointType,
+    ...labelOpts,
     id: `geojson-layer-${fd.slice_id}` as const,
     data: processedFeatures,
     extruded: fd.extruded,

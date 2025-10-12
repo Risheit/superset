@@ -25,6 +25,7 @@ import {
   jsDataMutator,
   jsTooltip,
   jsOnclickHref,
+  jsFunctionControl,
   fillColorPicker,
   strokeColorPicker,
   filled,
@@ -38,6 +39,15 @@ import {
   tooltipTemplate,
 } from '../../utilities/Shared_DeckGL';
 import { dndGeojsonColumn } from '../../utilities/sharedDndControls';
+import { BLACK_COLOR } from '../../utilities/controls';
+
+const defaultLabelConfigGenerator = `() => ({
+  // Check the documentation at https://deck.gl/docs/api-reference/layers/geojson-layer#pointtype-options-2
+  getText: f => f.properties.name,
+  getTextColor: [0, 0, 0, 255],
+  getTextSize: 24,
+  textSizeUnits: 'pixels',
+})`;
 
 const config: ControlPanelConfig = {
   controlPanelSections: [
@@ -63,6 +73,99 @@ const config: ControlPanelConfig = {
         [fillColorPicker, strokeColorPicker],
         [filled, stroked],
         [extruded],
+        [
+          {
+            name: 'enable_labels',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Enable Labels'),
+              description: t('TODO'),
+              default: false,
+            },
+          }
+        ],
+        [
+          {
+            name: 'enable_label_javascript_mode',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Enable Label JavaScript Mode'),
+              description: t('TODO'),
+              visibility: ({ form_data }) => !!form_data.enable_labels,
+              default: false,
+            },
+          }
+        ],
+        [
+          {
+            name: 'label_property_name',
+            config: {
+              type: 'TextControl',
+              label: t('Label Property Name'),
+              description: t('TODO'),
+              visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
+              default: 'name',
+            },
+          }
+        ],
+        [
+          {
+            name: 'label_color',
+            config: {
+              type: 'ColorPickerControl',
+              label: t('Label Color'),
+              description: t('TODO'),
+              visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
+              default: BLACK_COLOR,
+            },
+          }
+        ],
+        [
+          {
+            name: 'label_size',
+            config: {
+              type: 'SelectControl',
+              freeForm: true,
+              label: t('Label Size'),
+              description: t('TODO'),
+              visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
+              validators: [legacyValidateInteger],
+              choices: formatSelectOptions([8, 16, 24, 32, 64, 128]),
+              default: 24,
+            },
+          }
+        ],
+        [
+          {
+            name: 'label_size_unit',
+            config: {
+              type: 'SelectControl',
+              label: t('Label Size Unit'),
+              description: t('TODO'),
+              visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
+              default: 'pixels',
+              choices: [
+                ['meters', t('Meters')],
+                ['pixels', t('Pixels')],
+              ],
+            },
+          }
+        ],
+        [
+          {
+            name: 'label_javascript_config_generator',
+            config: {
+              ...jsFunctionControl(
+                t('Label JavaScript Config Generator'),
+                t('TODO'),
+                undefined,
+                undefined,
+                defaultLabelConfigGenerator,
+              ),
+              visibility: ({ form_data }) => !!form_data.enable_labels && !!form_data.enable_label_javascript_mode,
+            },
+          },
+        ],
         [lineWidth],
         [
           {
