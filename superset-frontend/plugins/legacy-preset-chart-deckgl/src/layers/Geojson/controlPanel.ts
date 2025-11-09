@@ -138,7 +138,7 @@ const config: ControlPanelConfig = {
               visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
               validators: [legacyValidateInteger],
               choices: formatSelectOptions([8, 16, 24, 32, 64, 128]),
-              default: 64,
+              default: 24,
             },
           }
         ],
@@ -233,8 +233,8 @@ const config: ControlPanelConfig = {
               description: t('Size of the icon'),
               visibility: ({ form_data }) => !!form_data.enable_icons && !form_data.enable_icon_javascript_mode,
               validators: [legacyValidateInteger],
-              choices: formatSelectOptions([16, 24, 32, 48, 64]),
-              default: 24,
+              choices: formatSelectOptions([16, 24, 32, 48, 64, 128]),
+              default: 64,
             },
           }
         ],
