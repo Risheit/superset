@@ -170,6 +170,23 @@ const deckglTextOptions: (keyof GeoJsonLayerProps)[] = [
   'textFontSettings',
 ];
 
+const deckglIconOptions: (keyof GeoJsonLayerProps)[] = [
+  'getIcon',
+  'getIconSize',
+  'getIconColor',
+  'getIconAngle',
+  'getIconPixelOffset',
+  'iconSizeUnits',
+  'iconSizeScale',
+  'iconSizeMinPixels',
+  'iconSizeMaxPixels',
+  'iconAtlas',
+  'iconMapping',
+  'iconBillboard',
+  'iconAlphaCutoff'
+
+];
+
 export const getLayer: GetLayerType<GeoJsonLayer> = function ({
   formData,
   onContextMenu,
@@ -202,9 +219,13 @@ export const getLayer: GetLayerType<GeoJsonLayer> = function ({
     processedFeatures = jsFnMutator(features) as ProcessedFeature[];
   }
 
+  
   let pointType = 'circle';
   if (fd.enable_labels) {
     pointType = `${pointType}+text`;
+  }
+  if (fd.enable_icons) {
+    pointType = `${pointType}+icon`;
   }
 
   let labelOpts: Partial<GeoJsonLayerProps> = {};
@@ -228,9 +249,34 @@ export const getLayer: GetLayerType<GeoJsonLayer> = function ({
     }
   }
 
+  let iconOpts: Partial<GeoJsonLayerProps> = {};
+  if (fd.enable_icons) {
+    if (fd.enable_icon_javascript_mode) {
+      const generator = sandboxedEval(fd.icon_javascript_config_generator);
+      const output: unknown = generator();
+      if (isObject(output)) {
+        iconOpts = Object.keys(output)
+          .filter((k): k is keyof GeoJsonLayerProps => deckglIconOptions.includes(k as keyof GeoJsonLayerProps))
+          .reduce((obj, key) => ({ ...obj, [key]: output[key as keyof typeof output] }), {});
+      }
+    } else {
+        iconOpts = {
+          getIcon: () => ({
+            url: fd.icon_url || 'https://static.thenounproject.com/png/888711-200.png',
+            height: fd.icon_height || 128,
+            width: fd.icon_width || 128,
+          }),
+          getIconSize: fd.icon_size || 50,
+          iconSizeUnits: fd.icon_size_unit || 'pixels',
+        };
+    }
+  }
+
+
   return new GeoJsonLayer({
     pointType,
     ...labelOpts,
+    ...iconOpts,
     id: `geojson-layer-${fd.slice_id}` as const,
     data: processedFeatures,
     extruded: fd.extruded,

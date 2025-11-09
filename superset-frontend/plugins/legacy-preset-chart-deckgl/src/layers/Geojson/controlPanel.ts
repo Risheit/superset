@@ -46,7 +46,14 @@ const defaultLabelConfigGenerator = `() => ({
   getText: f => f.properties.name,
   getTextColor: [0, 0, 0, 255],
   getTextSize: 24,
-  textSizeUnits: 'pixels',
+  textSizeUnits: 'pixels', 
+})`;
+
+const defaultIconConfigGenerator = `() => ({
+  // Check the documentation at https://deck.gl/docs/api-reference/layers/geojson-layer#pointtype-options-1
+   getIcon: () => ({ url: 'https://static.thenounproject.com/png/888711-200.png', height: 128, width: 128 }),
+  getIconSize: 60,
+  IconSizeUnits: 'pixels',
 })`;
 
 const config: ControlPanelConfig = {
@@ -131,7 +138,7 @@ const config: ControlPanelConfig = {
               visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
               validators: [legacyValidateInteger],
               choices: formatSelectOptions([8, 16, 24, 32, 64, 128]),
-              default: 24,
+              default: 64,
             },
           }
         ],
@@ -165,6 +172,87 @@ const config: ControlPanelConfig = {
               visibility: ({ form_data }) => !!form_data.enable_labels && !!form_data.enable_label_javascript_mode,
             },
           },
+        ],
+        [
+          {
+            name: 'enable_icons',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Enable Icons'),
+              description: t('Show icons for points in the GeoJSON layer'),
+              default: false,
+            },
+          }
+        ],
+        [
+          {
+            name: 'enable_icon_javascript_mode',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Enable Icon JavaScript Mode'),
+              description: t('TODO'),
+              visibility: ({ form_data }) => !!form_data.enable_icons,
+              default: false,
+            },
+          }
+        ],
+        [
+          {
+            name: 'icon_javascript_config_generator',
+            config: {
+              ...jsFunctionControl(
+                t('Icon JavaScript Config Generator'),
+                t('TODO'),
+                undefined,
+                undefined,
+                defaultIconConfigGenerator,
+              ),
+              visibility: ({ form_data }) => !!form_data.enable_icons && !!form_data.enable_icon_javascript_mode,
+            },
+          },
+        ],
+        [
+          {
+            name: 'icon_url',
+            config: {
+              type: 'TextControl',
+              label: t('Icon URL'),
+              description: t('GeoJSON property containing icon URL'),
+              visibility: ({ form_data }) => !!form_data.enable_icons && !form_data.enable_icon_javascript_mode,
+              default: 'https://static.thenounproject.com/png/888711-200.png',
+            },
+          }
+        ],
+        [
+          {
+            name: 'icon_size',
+            config: {
+              type: 'SelectControl',
+              freeForm: true,
+              label: t('Icon Size'),
+              description: t('Size of the icon'),
+              visibility: ({ form_data }) => !!form_data.enable_icons && !form_data.enable_icon_javascript_mode,
+              validators: [legacyValidateInteger],
+              choices: formatSelectOptions([16, 24, 32, 48, 64]),
+              default: 24,
+            },
+          }
+        ],
+        [
+          {
+            name: 'icon_size_unit',
+            config: {
+              type: 'SelectControl',
+              label: t('Icon Size Unit'),
+              description: t('Unit of the icon size'),
+              visibility: ({ form_data }) => !!form_data.enable_icons && !form_data.enable_icon_javascript_mode,
+              default: 'pixels',
+              choices: [
+                ['meters', t('Meters')],
+                ['pixels', t('Pixels')],
+              ],
+            },
+          }
         ],
         [lineWidth],
         [
