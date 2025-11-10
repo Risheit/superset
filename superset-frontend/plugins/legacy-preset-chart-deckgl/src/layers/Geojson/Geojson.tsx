@@ -29,6 +29,7 @@ import {
   JsonValue,
   QueryFormData,
   SetDataMaskHook,
+  SqlaFormData,
 } from '@superset-ui/core';
 
 import {
@@ -141,51 +142,100 @@ const getLineColor = (feature: JsonObject) => feature?.properties?.strokeColor;
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const deckglTextOptions: (keyof GeoJsonLayerProps)[] = [
-  'getText',
-  'getTextColor',
-  'getTextAngle',
-  'getTextSize',
-  'getTextAnchor',
-  'getTextAlignmentBaseline',
-  'getTextPixelOffset',
-  'getTextBackgroundColor',
-  'getTextBorderColor',
-  'getTextBorderWidth',
-  'textSizeUnits',
-  'textSizeScale',
-  'textSizeMinPixels',
-  'textSizeMaxPixels',
-  'textCharacterSet',
-  'textFontFamily',
-  'textFontWeight',
-  'textLineHeight',
-  'textMaxWidth',
-  'textWordBreak',
-  'textBackground',
-  'textBackgroundPadding',
-  'textOutlineColor',
-  'textOutlineWidth',
-  'textBillboard',
-  'textFontSettings',
-];
+export const computeJavaScriptDeckglTextOptions = (
+  output: unknown,
+): Partial<GeoJsonLayerProps> => {
+  if (!isObject(output)) return {};
+  const options: (keyof GeoJsonLayerProps)[] = [
+    'getText',
+    'getTextColor',
+    'getTextAngle',
+    'getTextSize',
+    'getTextAnchor',
+    'getTextAlignmentBaseline',
+    'getTextPixelOffset',
+    'getTextBackgroundColor',
+    'getTextBorderColor',
+    'getTextBorderWidth',
+    'textSizeUnits',
+    'textSizeScale',
+    'textSizeMinPixels',
+    'textSizeMaxPixels',
+    'textCharacterSet',
+    'textFontFamily',
+    'textFontWeight',
+    'textLineHeight',
+    'textMaxWidth',
+    'textWordBreak',
+    'textBackground',
+    'textBackgroundPadding',
+    'textOutlineColor',
+    'textOutlineWidth',
+    'textBillboard',
+    'textFontSettings',
+  ];
 
-const deckglIconOptions: (keyof GeoJsonLayerProps)[] = [
-  'getIcon',
-  'getIconSize',
-  'getIconColor',
-  'getIconAngle',
-  'getIconPixelOffset',
-  'iconSizeUnits',
-  'iconSizeScale',
-  'iconSizeMinPixels',
-  'iconSizeMaxPixels',
-  'iconAtlas',
-  'iconMapping',
-  'iconBillboard',
-  'iconAlphaCutoff'
+  const validEntries = Object.entries(output).filter(([k]) =>
+    options.includes(k as keyof GeoJsonLayerProps),
+  );
+  return Object.fromEntries(validEntries);
+};
 
-];
+export const computeJavaScriptDeckglIconOptions = (
+  output: unknown,
+): Partial<GeoJsonLayerProps> => {
+  if (!isObject(output)) return {};
+  const options: (keyof GeoJsonLayerProps)[] = [
+    'getIcon',
+    'getIconSize',
+    'getIconColor',
+    'getIconAngle',
+    'getIconPixelOffset',
+    'iconSizeUnits',
+    'iconSizeScale',
+    'iconSizeMinPixels',
+    'iconSizeMaxPixels',
+    'iconAtlas',
+    'iconMapping',
+    'iconBillboard',
+    'iconAlphaCutoff',
+  ];
+
+  const validEntries = Object.entries(output).filter(([k]) =>
+    options.includes(k as keyof GeoJsonLayerProps),
+  );
+  return Object.fromEntries(validEntries);
+};
+
+export const computeBasicDeckglTextOptions = (
+  fd: SqlaFormData,
+): Partial<GeoJsonLayerProps> => {
+  const labelColor = fd.label_color ?? BLACK_COLOR;
+
+  return {
+    getText: (f: JsonObject) => f?.properties?.[fd.label_property_name] ?? '',
+    getTextColor: [
+      labelColor.r,
+      labelColor.g,
+      labelColor.b,
+      255 * labelColor.a,
+    ],
+    getTextSize: fd.label_size ?? 24,
+    textSizeUnits: fd.label_size_unit ?? 'pixels',
+  };
+};
+
+export const computeBasicDeckglIconOptions = (
+  fd: SqlaFormData,
+): Partial<GeoJsonLayerProps> => ({
+  getIcon: () => ({
+    url: fd.icon_url ?? '',
+    width: fd.icon_width ?? 128,
+    height: fd.icon_height ?? 128,
+  }),
+  getIconSize: fd.icon_size ?? 24,
+  iconSizeUnits: fd.icon_size_unit ?? 'pixels',
+});
 
 export const getLayer: GetLayerType<GeoJsonLayer> = function ({
   formData,
@@ -219,7 +269,6 @@ export const getLayer: GetLayerType<GeoJsonLayer> = function ({
     processedFeatures = jsFnMutator(features) as ProcessedFeature[];
   }
 
-  
   let pointType = 'circle';
   if (fd.enable_labels) {
     pointType = `${pointType}+text`;
@@ -232,20 +281,9 @@ export const getLayer: GetLayerType<GeoJsonLayer> = function ({
   if (fd.enable_labels) {
     if (fd.enable_label_javascript_mode) {
       const generator = sandboxedEval(fd.label_javascript_config_generator);
-      const output: unknown = generator();
-      if (isObject(output)) {
-        labelOpts = Object.keys(output)
-          .filter((k): k is keyof GeoJsonLayerProps => deckglTextOptions.includes(k as keyof GeoJsonLayerProps))
-          .reduce((obj, key) => ({ ...obj, [key]: output[key as keyof typeof output] }), {});
-      }
+      labelOpts = computeJavaScriptDeckglTextOptions(generator());
     } else {
-      const labelColor = fd.label_color ?? BLACK_COLOR;
-      labelOpts = {
-        getText: (f: JsonObject) => f?.properties?.[fd.label_property_name] ?? '',
-        getTextColor: [labelColor.r, labelColor.g, labelColor.b, 255 * labelColor.a],
-        getTextSize: fd.label_size ?? 24,
-        textSizeUnits: fd.label_size_unit ?? 'pixels',
-      };
+      labelOpts = computeBasicDeckglTextOptions(fd);
     }
   }
 
@@ -253,25 +291,11 @@ export const getLayer: GetLayerType<GeoJsonLayer> = function ({
   if (fd.enable_icons) {
     if (fd.enable_icon_javascript_mode) {
       const generator = sandboxedEval(fd.icon_javascript_config_generator);
-      const output: unknown = generator();
-      if (isObject(output)) {
-        iconOpts = Object.keys(output)
-          .filter((k): k is keyof GeoJsonLayerProps => deckglIconOptions.includes(k as keyof GeoJsonLayerProps))
-          .reduce((obj, key) => ({ ...obj, [key]: output[key as keyof typeof output] }), {});
-      }
+      iconOpts = computeJavaScriptDeckglIconOptions(generator());
     } else {
-        iconOpts = {
-          getIcon: () => ({
-            url: fd.icon_url || 'https://static.thenounproject.com/png/888711-200.png',
-            height: fd.icon_height || 128,
-            width: fd.icon_width || 128,
-          }),
-          getIconSize: fd.icon_size || 50,
-          iconSizeUnits: fd.icon_size_unit || 'pixels',
-        };
+      iconOpts = computeBasicDeckglIconOptions(fd);
     }
   }
-
 
   return new GeoJsonLayer({
     pointType,

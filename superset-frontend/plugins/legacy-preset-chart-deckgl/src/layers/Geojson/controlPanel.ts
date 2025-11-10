@@ -89,7 +89,7 @@ const config: ControlPanelConfig = {
               description: t('TODO'),
               default: false,
             },
-          }
+          },
         ],
         [
           {
@@ -101,7 +101,7 @@ const config: ControlPanelConfig = {
               visibility: ({ form_data }) => !!form_data.enable_labels,
               default: false,
             },
-          }
+          },
         ],
         [
           {
@@ -110,10 +110,12 @@ const config: ControlPanelConfig = {
               type: 'TextControl',
               label: t('Label Property Name'),
               description: t('TODO'),
-              visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
+              visibility: ({ form_data }) =>
+                !!form_data.enable_labels &&
+                !form_data.enable_label_javascript_mode,
               default: 'name',
             },
-          }
+          },
         ],
         [
           {
@@ -122,10 +124,12 @@ const config: ControlPanelConfig = {
               type: 'ColorPickerControl',
               label: t('Label Color'),
               description: t('TODO'),
-              visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
+              visibility: ({ form_data }) =>
+                !!form_data.enable_labels &&
+                !form_data.enable_label_javascript_mode,
               default: BLACK_COLOR,
             },
-          }
+          },
         ],
         [
           {
@@ -135,12 +139,14 @@ const config: ControlPanelConfig = {
               freeForm: true,
               label: t('Label Size'),
               description: t('TODO'),
-              visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
+              visibility: ({ form_data }) =>
+                !!form_data.enable_labels &&
+                !form_data.enable_label_javascript_mode,
               validators: [legacyValidateInteger],
               choices: formatSelectOptions([8, 16, 24, 32, 64, 128]),
               default: 24,
             },
-          }
+          },
         ],
         [
           {
@@ -149,14 +155,16 @@ const config: ControlPanelConfig = {
               type: 'SelectControl',
               label: t('Label Size Unit'),
               description: t('TODO'),
-              visibility: ({ form_data }) => !!form_data.enable_labels && !form_data.enable_label_javascript_mode,
+              visibility: ({ form_data }) =>
+                !!form_data.enable_labels &&
+                !form_data.enable_label_javascript_mode,
               default: 'pixels',
               choices: [
                 ['meters', t('Meters')],
                 ['pixels', t('Pixels')],
               ],
             },
-          }
+          },
         ],
         [
           {
@@ -169,7 +177,9 @@ const config: ControlPanelConfig = {
                 undefined,
                 defaultLabelConfigGenerator,
               ),
-              visibility: ({ form_data }) => !!form_data.enable_labels && !!form_data.enable_label_javascript_mode,
+              visibility: ({ form_data }) =>
+                !!form_data.enable_labels &&
+                !!form_data.enable_label_javascript_mode,
             },
           },
         ],
@@ -182,7 +192,7 @@ const config: ControlPanelConfig = {
               description: t('Show icons for points in the GeoJSON layer'),
               default: false,
             },
-          }
+          },
         ],
         [
           {
@@ -194,7 +204,7 @@ const config: ControlPanelConfig = {
               visibility: ({ form_data }) => !!form_data.enable_icons,
               default: false,
             },
-          }
+          },
         ],
         [
           {
@@ -207,7 +217,9 @@ const config: ControlPanelConfig = {
                 undefined,
                 defaultIconConfigGenerator,
               ),
-              visibility: ({ form_data }) => !!form_data.enable_icons && !!form_data.enable_icon_javascript_mode,
+              visibility: ({ form_data }) =>
+                !!form_data.enable_icons &&
+                !!form_data.enable_icon_javascript_mode,
             },
           },
         ],
@@ -218,10 +230,12 @@ const config: ControlPanelConfig = {
               type: 'TextControl',
               label: t('Icon URL'),
               description: t('GeoJSON property containing icon URL'),
-              visibility: ({ form_data }) => !!form_data.enable_icons && !form_data.enable_icon_javascript_mode,
+              visibility: ({ form_data }) =>
+                !!form_data.enable_icons &&
+                !form_data.enable_icon_javascript_mode,
               default: 'https://static.thenounproject.com/png/888711-200.png',
             },
-          }
+          },
         ],
         [
           {
@@ -231,12 +245,14 @@ const config: ControlPanelConfig = {
               freeForm: true,
               label: t('Icon Size'),
               description: t('Size of the icon'),
-              visibility: ({ form_data }) => !!form_data.enable_icons && !form_data.enable_icon_javascript_mode,
+              visibility: ({ form_data }) =>
+                !!form_data.enable_icons &&
+                !form_data.enable_icon_javascript_mode,
               validators: [legacyValidateInteger],
               choices: formatSelectOptions([16, 24, 32, 48, 64, 128]),
               default: 64,
             },
-          }
+          },
         ],
         [
           {
@@ -245,14 +261,16 @@ const config: ControlPanelConfig = {
               type: 'SelectControl',
               label: t('Icon Size Unit'),
               description: t('Unit of the icon size'),
-              visibility: ({ form_data }) => !!form_data.enable_icons && !form_data.enable_icon_javascript_mode,
+              visibility: ({ form_data }) =>
+                !!form_data.enable_icons &&
+                !form_data.enable_icon_javascript_mode,
               default: 'pixels',
               choices: [
                 ['meters', t('Meters')],
                 ['pixels', t('Pixels')],
               ],
             },
-          }
+          },
         ],
         [lineWidth],
         [
